@@ -13,6 +13,9 @@
     <!-- Only used when a parent records their own narration. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <!-- The activity is locked to portrait; without this, devices that do not report a
+         portrait screen (some tablets, desktops, XR) are filtered out on Play. -->
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
 
     <!-- Lets the app see the device's text-to-speech engine (Android 11+ package visibility). -->
     <queries>
