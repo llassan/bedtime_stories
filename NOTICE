@@ -1,0 +1,31 @@
+Bedtime Stories
+Copyright (C) 2026 llassan
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. It is distributed WITHOUT ANY WARRANTY. See the LICENSE file.
+
+The app is licensed under GPL-3.0 because it ships espeak-ng (GPL-3.0) as part
+of its offline speech engine.
+
+Third-party components
+----------------------
+sherpa-onnx 1.13.8          Apache-2.0   https://github.com/k2-fsa/sherpa-onnx
+  (bundles ONNX Runtime, MIT, and espeak-ng, GPL-3.0-or-later)
+espeak-ng pronunciation data GPL-3.0-or-later  https://github.com/espeak-ng/espeak-ng
+Kokoro voice model (int8, en v0.19)  Apache-2.0  https://huggingface.co/hexgrad/Kokoro-82M
+  licence text: app/src/main/assets/kokoro/LICENSE
+Nunito typeface             SIL OFL 1.1  licenses/OFL-Nunito.txt
+Fredoka typeface            SIL OFL 1.1  licenses/OFL-Fredoka.txt
+Jetpack Compose, AndroidX   Apache-2.0
+Google Mobile Ads SDK       Google's SDK terms (proprietary; fetched by Gradle, not redistributed in this repository)
+
+The large binary files (the sherpa-onnx library and the Kokoro model) are not
+stored in this repository. Run scripts/fetch-voice.sh to download them.
+
+Stories
+-------
+The twelve original stories and the retellings of forty traditional tales, in
+all ten languages, were written for this app and are covered by the same
+licence. The traditional tales themselves are in the public domain.

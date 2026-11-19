@@ -1,0 +1,17 @@
+.gradle/
+build/
+local.properties
+*.jks
+keystore.properties
+.idea/
+.kotlin/
+
+# Large voice files, restore with scripts/fetch-voice.sh
+app/libs/*.aar
+app/src/main/assets/kokoro/
+
+# Voice samples exported for listening
+samples/
+
+# Real AdMob ids
+ads.properties
