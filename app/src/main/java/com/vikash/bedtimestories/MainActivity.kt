@@ -68,9 +68,13 @@ class MainActivity : ComponentActivity() {
             BedtimeTheme {
                 // A developer-only screen for reviewing the artwork (see Gallery.kt).
                 val debuggable = applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
-                if (debuggable && intent.getBooleanExtra("gallery", false)) {
-                    Box(Modifier.fillMaxSize().background(NightBrush)) { com.vikash.bedtimestories.ui.art.Gallery() }
-                } else Root(app, narrator, neural, voice, lullaby)
+                when {
+                    debuggable && intent.getBooleanExtra("gallery", false) ->
+                        Box(Modifier.fillMaxSize().background(NightBrush)) { com.vikash.bedtimestories.ui.art.Gallery() }
+                    debuggable && intent.getBooleanExtra("promo", false) -> com.vikash.bedtimestories.ui.art.Promo()
+                    // "noads" hides the test banner so store screenshots never show an advertisement.
+                    else -> Root(app, narrator, neural, voice, lullaby, showAds = !(debuggable && intent.getBooleanExtra("noads", false)))
+                }
             }
         }
     }
@@ -98,7 +102,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun Root(app: AppState, narrator: Narrator, neural: NeuralNarrator, voice: VoiceBox, lullaby: Lullaby) {
+private fun Root(app: AppState, narrator: Narrator, neural: NeuralNarrator, voice: VoiceBox, lullaby: Lullaby, showAds: Boolean = true) {
     val screen = app.screen
 
     // Load whichever storyteller is chosen, so it is ready before play is pressed.
@@ -143,7 +147,7 @@ private fun Root(app: AppState, narrator: Narrator, neural: NeuralNarrator, voic
             }
            }
            // One banner on the browsing screens only: never during a story, the welcome or the goodnight screen.
-           if (app.onboarded && !fullBleed && !app.goodnight) BannerAd()
+           if (showAds && app.onboarded && !fullBleed && !app.goodnight) BannerAd()
         }
         }
         if (app.goodnight) Goodnight(app)

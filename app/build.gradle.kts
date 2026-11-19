@@ -13,6 +13,12 @@ val adsProps = Properties().apply {
     val f = rootProject.file("ads.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
+// Upload-key credentials from keystore.properties at the repo root (gitignored).
+// See keystore.properties.example for the expected keys.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
 val testAppId = "ca-app-pub-3940256099942544~3347511713"
 val testBannerId = "ca-app-pub-3940256099942544/9214589741"
 
@@ -32,8 +38,22 @@ android {
         buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"$testBannerId\"")
     }
 
+    signingConfigs {
+        create("release") {
+            val store = rootProject.file(keystoreProps.getProperty("storeFile") ?: "upload-keystore.jks")
+            if (store.exists() && keystoreProps.getProperty("storePassword") != null) {
+                storeFile = store
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // Sign only when keystore.properties is present, so a fresh clone still builds.
+            signingConfigs.getByName("release").storeFile?.let { signingConfig = signingConfigs.getByName("release") }
             // Debug builds always show test ads; only a release build uses the real ids.
             manifestPlaceholders["admobAppId"] = adsProps.getProperty("admobAppId") ?: testAppId
             buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"${adsProps.getProperty("admobBannerUnitId") ?: testBannerId}\"")
