@@ -95,16 +95,18 @@ fun VoicePicker(app: AppState, neural: NeuralNarrator, narrator: Narrator, modif
                         previewing = i
                         job = scope.launch {
                             try {
+                                // Only the bundled English voice greets the child by name: the phone's own
+                                // voice may be an online one, and the name must never leave the device.
                                 val hello = when (v.lang) {
-                                    Lang.HI -> "नमस्ते ${app.childName}। चलो, साथ में एक कहानी सुनते हैं।"
-                                    Lang.MR -> "नमस्कार ${app.childName}. चला, आपण एक गोष्ट ऐकूया."
-                                    Lang.GU -> "નમસ્તે ${app.childName}. ચાલો, આપણે એક વાર્તા સાંભળીએ."
-                                    Lang.TA -> "வணக்கம் ${app.childName}. வா, நாம் ஒரு கதை கேட்போம்."
-                                    Lang.TE -> "నమస్తే ${app.childName}. రా, మనం ఒక కథ విందాం."
-                                    Lang.BN -> "নমস্কার ${app.childName}। চলো, আমরা একটা গল্প শুনি।"
-                                    Lang.KN -> "ನಮಸ್ಕಾರ ${app.childName}. ಬಾ, ನಾವು ಒಂದು ಕಥೆ ಕೇಳೋಣ."
-                                    Lang.ML -> "നമസ്കാരം ${app.childName}. വരൂ, നമുക്ക് ഒരു കഥ കേൾക്കാം."
-                                    Lang.PA -> "ਸਤ ਸ੍ਰੀ ਅਕਾਲ ${app.childName}। ਆਓ, ਆਪਾਂ ਇੱਕ ਕਹਾਣੀ ਸੁਣੀਏ।"
+                                    Lang.HI -> "नमस्ते। चलो, साथ में एक कहानी सुनते हैं।"
+                                    Lang.MR -> "नमस्कार. चला, आपण एक गोष्ट ऐकूया."
+                                    Lang.GU -> "નમસ્તે. ચાલો, આપણે એક વાર્તા સાંભળીએ."
+                                    Lang.TA -> "வணக்கம். வா, நாம் ஒரு கதை கேட்போம்."
+                                    Lang.TE -> "నమస్తే. రా, మనం ఒక కథ విందాం."
+                                    Lang.BN -> "নমস্কার। চলো, আমরা একটা গল্প শুনি।"
+                                    Lang.KN -> "ನಮಸ್ಕಾರ. ಬಾ, ನಾವು ಒಂದು ಕಥೆ ಕೇಳೋಣ."
+                                    Lang.ML -> "നമസ്കാരം. വരൂ, നമുക്ക് ഒരു കഥ കേൾക്കാം."
+                                    Lang.PA -> "ਨਮਸਤੇ। ਆਓ, ਆਪਾਂ ਇੱਕ ਕਹਾਣੀ ਸੁਣੀਏ।"
                                     Lang.EN -> "Hello ${app.childName.ifBlank { "there" }}. I am ${v.name}. Shall we read a story together?"
                                 }
                                 if (!neural.speak(hello, v, v.pace) { _, _ -> }) narrator.speak(hello, app.slowVoice, v.lang.locale) { _, _ -> }
