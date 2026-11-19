@@ -166,7 +166,7 @@ fun ProfileScreen(app: AppState, neural: NeuralNarrator, narrator: Narrator, fir
         )
         // GPL-3.0 asks that people who receive the app are told it is free software.
         Text(
-            "Free and open-source software, licensed under GPL-3.0.",
+            "Free and open-source software, licensed under GPL-3.0.\nSource: github.com/llassan/bedtime_stories",
             color = Mist.copy(alpha = 0.7f),
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,

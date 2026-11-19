@@ -52,3 +52,5 @@ adb shell am start -n com.vikash.bedtimestories/.MainActivity --ez gallery true
 ## Licence
 
 GPL-3.0. See `LICENSE` and `NOTICE` for the third-party components.
+
+Source: https://github.com/llassan/bedtime_stories
