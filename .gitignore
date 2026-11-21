@@ -10,6 +10,7 @@ keystore.properties.own-key
 # Large voice files, restore with scripts/fetch-voice.sh
 app/libs/*.aar
 app/src/main/assets/kokoro/
+hindivoice/src/main/assets/
 
 # Voice samples exported for listening
 samples/

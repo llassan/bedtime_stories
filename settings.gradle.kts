@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "BedtimeStories"
 include(":app")
+include(":hindivoice")

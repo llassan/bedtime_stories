@@ -8,8 +8,10 @@ Kannada, Malayalam and Punjabi.
   name and their own drawn character, and a story maker builds new ones.
 - **Forty traditional tales** from the Panchatantra and other well-loved fables,
   retold gently, in every language.
-- **Read to me.** English is read by four offline neural storytellers (Kokoro,
-  run by sherpa-onnx). Other languages use the phone's text-to-speech voice.
+- **Read to me.** English is read by offline neural storytellers (Kokoro v0.19,
+  run by sherpa-onnx). Hindi has two more, Meera and Raghav (Kokoro v1.0), whose
+  model is the on-demand Play asset pack `hindivoice`, downloaded the first time a
+  family picks one. Other languages use the phone's text-to-speech voice.
 - **My voice.** A parent can record each page and have it played back.
 - **Made for bedtime.** A soft lullaby, a sleep timer and a goodnight screen.
 - **Ads.** One banner on the browsing screens only, marked child-directed. No
@@ -25,8 +27,24 @@ scripts/fetch-voice.sh
 ./gradlew :app:assembleDebug
 ```
 
-`fetch-voice.sh` downloads the speech library and the English voice model
-(about 150 MB), which are too large for git.
+`fetch-voice.sh` downloads the speech library, the English voice model and the
+Hindi voice model (about 300 MB in all), which are too large for git.
+
+A plain `assembleDebug` APK does not contain the Hindi asset pack. To try the
+Hindi download on a device, build the bundle and install it in Play's local
+testing mode:
+
+```bash
+./gradlew :app:bundleDebug
+```
+
+```bash
+bundletool build-apks --bundle=app/build/outputs/bundle/debug/app-debug.aab --output=/tmp/bs.apks --local-testing --connected-device --ks=$HOME/.android/debug.keystore --ks-pass=pass:android --ks-key-alias=androiddebugkey --key-pass=pass:android
+```
+
+```bash
+bundletool install-apks --apks=/tmp/bs.apks
+```
 
 Debug builds show Google's test ads. For a release build, put your own AdMob
 ids in `ads.properties` at the project root:

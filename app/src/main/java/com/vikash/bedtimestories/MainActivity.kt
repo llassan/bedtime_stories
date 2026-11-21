@@ -127,7 +127,8 @@ private fun Root(app: AppState, narrator: Narrator, neural: NeuralNarrator, voic
     val screen = app.screen
 
     // Load whichever storyteller is chosen, so it is ready before play is pressed.
-    LaunchedEffect(app.voice) { neural.warmUp(app.storyVoice) }
+    // Also once the Hindi voice finishes downloading, so it is ready when play is pressed.
+    LaunchedEffect(app.voice, neural.hindiPack.state) { neural.warmUp(app.storyVoice) }
 
     // Background lullaby only while a story is open.
     val wantMusic = app.musicOn && (app.foreground || app.playing) && !app.goodnight && app.onboarded && screen is Screen.Reader

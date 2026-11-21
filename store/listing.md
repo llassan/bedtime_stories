@@ -33,6 +33,7 @@ Type your child's name, choose a boy or a girl, and pick how their character loo
 
 READ TO ME
 • English stories are read by six built-in storytellers that work without internet, including a little girl and a little boy
+• Hindi stories can be read by Meera and Raghav, two storytellers that work without internet after a one-time download
 • Other languages are read by your phone's own voice
 • In English, the sentence being read lights up, so early readers can follow along
 • Pages turn by themselves, and the story keeps playing with the screen locked
@@ -55,7 +56,7 @@ RESPECTFUL BY DESIGN
 • Free and open-source software
 
 A NOTE ON VOICES
-English narration is built in and works offline. For other languages the app uses the text-to-speech voice installed on your phone; if you hear nothing, install that language in your phone's Text-to-speech settings.
+English narration is built in and works offline. The Hindi storytellers Meera and Raghav are downloaded once from Google Play (about 90 MB) and then also work offline. For other languages the app uses the text-to-speech voice installed on your phone; if you hear nothing, install that language in your phone's Text-to-speech settings.
 
 Sweet dreams.
 ```

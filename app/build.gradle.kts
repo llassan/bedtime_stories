@@ -74,6 +74,8 @@ android {
         compose = true
         buildConfig = true
     }
+    // The Hindi storytellers' voice, downloaded from Play only when a family picks one.
+    assetPacks += listOf(":hindivoice")
 }
 
 dependencies {
@@ -81,6 +83,7 @@ dependencies {
     implementation(files("libs/sherpa-onnx-1.13.8.aar"))
 
     implementation(libs.play.services.ads)
+    implementation(libs.play.asset.delivery)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.kotlinx.coroutines.android)

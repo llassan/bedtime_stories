@@ -1,5 +1,7 @@
 package com.vikash.bedtimestories.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +27,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -40,7 +43,9 @@ import androidx.compose.ui.unit.dp
 import com.vikash.bedtimestories.AppState
 import com.vikash.bedtimestories.audio.Narrator
 import com.vikash.bedtimestories.audio.NeuralNarrator
+import com.vikash.bedtimestories.audio.HINDI_ENGINE
 import com.vikash.bedtimestories.audio.SYSTEM_VOICE
+import com.vikash.bedtimestories.audio.VoicePack
 import com.vikash.bedtimestories.audio.STORY_VOICES
 import com.vikash.bedtimestories.data.Lang
 import kotlinx.coroutines.Job
@@ -53,9 +58,37 @@ fun VoicePicker(app: AppState, neural: NeuralNarrator, narrator: Narrator, modif
     var previewing by remember { mutableIntStateOf(-1) }
     var job by remember { mutableStateOf<Job?>(null) }
     DisposableEffect(Unit) { onDispose { job?.cancel() } }
+    val pack = neural.hindiPack
+    val confirm = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {}
+    val hasHindi = STORY_VOICES.any { it.lang == app.lang && it.engine == HINDI_ENGINE }
+    // A Hindi storyteller is chosen but its voice is not on the phone yet.
+    val waitingForPack = app.storyVoice.engine == HINDI_ENGINE && pack.state != VoicePack.State.READY
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (app.storyVoice.engine == SYSTEM_VOICE) {
+        if (hasHindi && pack.state != VoicePack.State.READY) {
+            val size = if (pack.sizeMb > 0) "${pack.sizeMb} MB" else "90 MB"
+            Text(
+                when (pack.state) {
+                    VoicePack.State.FAILED -> app.t(
+                        "The Hindi storytellers could not be downloaded. Check the internet connection; the app must be installed from Google Play.",
+                        "हिन्दी कहानी सुनाने वाले डाउनलोड नहीं हो सके। इंटरनेट देखें; ऐप Google Play से इंस्टॉल होना चाहिए।",
+                    )
+                    VoicePack.State.DOWNLOADING -> app.t(
+                        "Downloading the Hindi storytellers… Until then, your phone’s voice reads.",
+                        "हिन्दी कहानी सुनाने वाले डाउनलोड हो रहे हैं… तब तक फ़ोन की आवाज़ पढ़ेगी।",
+                    )
+                    else -> app.t(
+                        "Meera and Raghav read Hindi stories offline. Download them once (about $size); until then, your phone’s voice reads.",
+                        "मीरा और राघव बिना इंटरनेट हिन्दी कहानियाँ सुनाते हैं। इन्हें एक बार डाउनलोड करें (लगभग $size); तब तक फ़ोन की आवाज़ पढ़ेगी।",
+                    )
+                },
+                color = if (pack.state == VoicePack.State.FAILED) Rose else Mist,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        if (waitingForPack) {
+            // The note above already says the phone's voice reads for now.
+        } else if (app.storyVoice.engine == SYSTEM_VOICE) {
             Text(app.t("This language is read by your phone’s own voice. If you hear nothing, install it in the phone’s Text-to-speech settings.", "यह भाषा आपके फ़ोन की अपनी आवाज़ में पढ़ी जाती है। आवाज़ न आए तो फ़ोन की टेक्स्ट-टू-स्पीच सेटिंग में इसे इंस्टॉल करें।"), color = Mist, style = MaterialTheme.typography.bodySmall)
         } else when (neural.state) {
             NeuralNarrator.State.LOADING, NeuralNarrator.State.IDLE -> {
@@ -75,7 +108,10 @@ fun VoicePicker(app: AppState, neural: NeuralNarrator, narrator: Narrator, modif
                     .clip(RoundedCornerShape(18.dp))
                     .background(if (selected) Gold.copy(alpha = 0.14f) else CardBlue)
                     .border(1.5.dp, if (selected) Gold else CardBlue, RoundedCornerShape(18.dp))
-                    .clickable { app.chooseVoice(i) }
+                    .clickable {
+                        app.chooseVoice(i)
+                        if (v.engine == HINDI_ENGINE) pack.download()
+                    }
                     .padding(start = 14.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -87,6 +123,18 @@ fun VoicePicker(app: AppState, neural: NeuralNarrator, narrator: Narrator, modif
                     Text(v.name, style = MaterialTheme.typography.titleMedium)
                     Text(v.blurb, color = Mist, style = MaterialTheme.typography.bodySmall)
                 }
+                if (v.engine == HINDI_ENGINE && pack.state != VoicePack.State.READY) {
+                    when (pack.state) {
+                        VoicePack.State.DOWNLOADING -> Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                            if (pack.progress > 0f) CircularProgressIndicator(progress = { pack.progress }, modifier = Modifier.size(26.dp), strokeWidth = 3.dp)
+                            else CircularProgressIndicator(Modifier.size(26.dp), strokeWidth = 3.dp)
+                        }
+                        VoicePack.State.NEEDS_CONFIRM -> TextButton(onClick = { pack.confirm(confirm) }) { Text(app.t("Allow", "अनुमति दें")) }
+                        VoicePack.State.FAILED -> TextButton(onClick = { pack.download() }) { Text(app.t("Retry", "फिर से")) }
+                        else -> TextButton(onClick = { app.chooseVoice(i); pack.download() }) { Text(app.t("Download", "डाउनलोड")) }
+                    }
+                    return@Row
+                }
                 IconButton(onClick = {
                     app.playing = false
                     job?.cancel()
@@ -95,10 +143,12 @@ fun VoicePicker(app: AppState, neural: NeuralNarrator, narrator: Narrator, modif
                         previewing = i
                         job = scope.launch {
                             try {
-                                // Only the bundled English voice greets the child by name: the phone's own
+                                // Only the storytellers that run on the phone greet the child by name: the phone's own
                                 // voice may be an online one, and the name must never leave the device.
                                 val hello = when (v.lang) {
-                                    Lang.HI -> "नमस्ते। चलो, साथ में एक कहानी सुनते हैं।"
+                                    // The Hindi storytellers run on the phone too, so they may use the name.
+                                    Lang.HI -> if (v.engine == HINDI_ENGINE) "नमस्ते ${app.childName.ifBlank { "दोस्त" }}। मैं ${v.name} हूँ। चलो, साथ में एक कहानी सुनते हैं।"
+                                        else "नमस्ते। चलो, साथ में एक कहानी सुनते हैं।"
                                     Lang.MR -> "नमस्कार. चला, आपण एक गोष्ट ऐकूया."
                                     Lang.GU -> "નમસ્તે. ચાલો, આપણે એક વાર્તા સાંભળીએ."
                                     Lang.TA -> "வணக்கம். வா, நாம் ஒரு கதை கேட்போம்."
