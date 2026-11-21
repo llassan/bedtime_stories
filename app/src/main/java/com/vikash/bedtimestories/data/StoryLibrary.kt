@@ -10,7 +10,12 @@ object StoryLibrary {
 
     private fun p(text: String, art: String) = Page(text, art)
 
-    val stories: List<Story> = listOf(
+    /** The stories, with the longer retelling wherever one has been written. */
+    val stories: List<Story> by lazy {
+        base.map { s -> LONG_ORIGINALS[s.id]?.let { long -> s.copy(pages = long.map { Page(it.en, it.art) }, long = true) } ?: s }
+    }
+
+    private val base: List<Story> = listOf(
         Story(
             "moon-button", "The Moon’s Lost Button", Mood.KINDNESS, Scene.NIGHT, "hero button",
             "A little kindness can make the whole night brighter.",

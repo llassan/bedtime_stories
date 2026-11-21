@@ -69,13 +69,30 @@ data class Story(
     val classic: Boolean = false,
     /** Titles and morals in languages beyond English and Hindi. */
     val more: Map<Lang, Tr> = emptyMap(),
+    /**
+     * Languages that still read the short version of a story whose English and Hindi
+     * were lengthened: their own pages, with the pictures of the short version.
+     */
+    val short: Map<Lang, List<Page>> = emptyMap(),
+    /** True when [pages] is a longer retelling that replaced an earlier short one. */
+    val long: Boolean = false,
 ) {
+    /** The pages read in [lang]: the short version where that language has not been lengthened yet. */
+    fun pages(lang: Lang): List<Page> = short[lang] ?: pages
+
+    /**
+     * Where a parent's recordings of this story are kept. Recordings are saved by page
+     * number, so the longer retelling gets a fresh place and recordings made for the short
+     * version stay with the short version.
+     */
+    fun voiceKey(lang: Lang): String = if (long && lang !in short) "$id+long" else id
+
     fun title(lang: Lang) = (if (lang == Lang.HI) titleHi else more[lang]?.title) ?: title
     fun moral(lang: Lang) = (if (lang == Lang.HI) moralHi else more[lang]?.moral) ?: moral
     /** Whether the whole story exists in [lang]. */
-    fun has(lang: Lang) = pages.all { it.has(lang) }
+    fun has(lang: Lang) = lang in short || pages.all { it.has(lang) }
 
-    /** Read-aloud time at a slow bedtime pace. */
-    val minutes: Int
-        get() = ((pages.sumOf { it.text.split(' ').size } + 99) / 100).coerceAtLeast(1)
+    /** Read-aloud time at a slow bedtime pace, counted on the English words of the version [lang] reads. */
+    fun minutes(lang: Lang): Int =
+        ((pages(lang).sumOf { it.text.split(' ').size } + 99) / 100).coerceAtLeast(1)
 }

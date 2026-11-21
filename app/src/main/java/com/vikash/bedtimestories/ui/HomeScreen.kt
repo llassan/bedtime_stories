@@ -126,7 +126,7 @@ fun HomeScreen(app: AppState, voice: VoiceBox) {
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth(0.8f),
                     )
-                    Text("${featured.minutes} ${app.t("min", "मिनट")} · ${app.t(featured.mood.label, featured.mood.labelHi)}", color = Mist, style = MaterialTheme.typography.bodySmall)
+                    Text("${featured.minutes(app.lang)} ${app.t("min", "मिनट")} · ${app.t(featured.mood.label, featured.mood.labelHi)}", color = Mist, style = MaterialTheme.typography.bodySmall)
                 }
                 Box(
                     Modifier.align(Alignment.BottomEnd).padding(14.dp).size(48.dp).clip(CircleShape).background(Gold),
@@ -174,7 +174,7 @@ fun HomeScreen(app: AppState, voice: VoiceBox) {
         }
 
         items(shown, key = { it.id }) { story ->
-            StoryCard(app, story, voice.count(story.id) > 0) { deleting = story }
+            StoryCard(app, story, voice.count(story.voiceKey(app.lang)) > 0) { deleting = story }
         }
 
         if (shown.isEmpty()) {
@@ -236,7 +236,7 @@ private fun StoryCard(app: AppState, story: Story, hasVoice: Boolean, onDelete: 
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                "${story.minutes} ${app.t("min", "मिनट")} · ${app.t(story.mood.label, story.mood.labelHi)}" + if (hasVoice) app.t(" · your voice", " · आपकी आवाज़") else "",
+                "${story.minutes(app.lang)} ${app.t("min", "मिनट")} · ${app.t(story.mood.label, story.mood.labelHi)}" + if (hasVoice) app.t(" · your voice", " · आपकी आवाज़") else "",
                 color = Mist,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp),

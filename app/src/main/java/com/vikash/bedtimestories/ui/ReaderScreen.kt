@@ -106,13 +106,15 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: NeuralNarrator, voice: VoiceBox, player: ReadAloud) {
-    val pages = story.pages
+    val pages = story.pages(app.lang)
+    // A parent's recordings belong to the version of the story being read.
+    val voiceKey = story.voiceKey(app.lang)
     val pager = rememberPagerState { pages.size + 1 } // the extra page is "The End"
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val view = LocalView.current
 
-    var myVoice by rememberSaveable { mutableStateOf(voice.count(story.id) > 0) }
+    var myVoice by rememberSaveable { mutableStateOf(voice.count(voiceKey) > 0) }
     var recording by remember { mutableStateOf(false) }
     var recTick by remember { mutableIntStateOf(0) } // bumps when recordings change on disk
     var notice by remember { mutableStateOf<String?>(null) }
@@ -133,7 +135,7 @@ fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: Neural
     val startRecording = {
         app.playing = false
         notice = null
-        if (voice.startRecording(story.id, pager.currentPage)) recording = true
+        if (voice.startRecording(voiceKey, pager.currentPage)) recording = true
         else notice = "The microphone could not be started."
     }
     val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -169,7 +171,7 @@ fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: Neural
     LaunchedEffect(pager.settledPage, app.voice, app.slowVoice, myVoice, app.lang) {
         val from = pager.settledPage
         if (from < pages.size) {
-            val ahead = pages.drop(from).filterIndexed { i, _ -> !(myVoice && voice.has(story.id, from + i)) }
+            val ahead = pages.drop(from).filterIndexed { i, _ -> !(myVoice && voice.has(voiceKey, from + i)) }
             neural.prepare(ahead.map { app.text(it) }, app.storyVoice, app.speed)
         }
     }
@@ -246,7 +248,7 @@ fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: Neural
             }
 
             if (myVoice) {
-                val recorded = remember(recTick, page) { voice.has(story.id, page) }
+                val recorded = remember(recTick, page) { voice.has(voiceKey, page) }
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(48.dp),
                     horizontalArrangement = Arrangement.Center,
@@ -270,7 +272,7 @@ fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: Neural
                             Text(if (recorded) app.t("Record this page again", "यह पन्ना फिर रिकॉर्ड करें") else app.t("Record this page", "यह पन्ना रिकॉर्ड करें"))
                         }
                         if (recorded) {
-                            TextButton(onClick = { voice.delete(story.id, page); recTick++ }) { Text("Delete") }
+                            TextButton(onClick = { voice.delete(voiceKey, page); recTick++ }) { Text("Delete") }
                         }
                     }
                 }

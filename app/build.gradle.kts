@@ -30,8 +30,8 @@ android {
         applicationId = "com.vikash.bedtimestories"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.1.0"
+        versionCode = 4
+        versionName = "1.2.0"
         // The neural voice is too slow to be useful on 32-bit devices.
         ndk { abiFilters += "arm64-v8a" }
         manifestPlaceholders["admobAppId"] = testAppId
@@ -84,6 +84,7 @@ dependencies {
 
     implementation(libs.play.services.ads)
     implementation(libs.play.asset.delivery)
+    testImplementation("junit:junit:4.13.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.kotlinx.coroutines.android)

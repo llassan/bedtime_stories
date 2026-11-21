@@ -53,6 +53,8 @@ class ReadAloud(
         page = from
         failed = false
         highlight = null
+        val pages = story.pages(app.lang)
+        val voiceKey = story.voiceKey(app.lang)
         job = scope.launch {
             var p = from
             while (isActive) {
@@ -60,14 +62,14 @@ class ReadAloud(
                     page = p
                     turn++
                 }
-                if (p >= story.pages.size) {
+                if (p >= pages.size) {
                     // "The End": stop, and go to sleep if the timer was waiting for the story to finish.
                     if (app.sleepMode == SleepMode.END) app.triggerGoodnight() else app.playing = false
                     break
                 }
                 delay(350)
-                val text = app.text(story.pages[p])
-                val own = voice.file(story.id, p)
+                val text = app.text(pages[p])
+                val own = voice.file(voiceKey, p)
                 val ok = if (myVoice && own.length() > 0) {
                     voice.play(own)
                 } else {

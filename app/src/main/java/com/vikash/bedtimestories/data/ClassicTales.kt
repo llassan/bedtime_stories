@@ -28,6 +28,22 @@ object ClassicTales {
             ).filterValues { it != null && it.pages.size == story.pages.size }.mapValues { it.value!! }
             // The first set carries its Hindi inline; the second set keeps it in a map like the others.
             val hindi = TALES2_HI[id]?.takeIf { it.pages.size == story.pages.size }
+            val long = LONG_TALES[id]
+            if (long != null && long.all { it.hi != null }) {
+                // English and Hindi read the longer retelling. Every other language keeps its
+                // short text, drawn with the short version's pictures.
+                val art = SHORT_ART[id].orEmpty()
+                return@map story.copy(
+                    titleHi = story.titleHi ?: hindi?.title,
+                    moralHi = story.moralHi ?: hindi?.moral,
+                    more = extra,
+                    pages = long.map { Page(it.en, it.art, it.hi) },
+                    short = extra.filterValues { it.pages.size == art.size }.mapValues { (lang, tr) ->
+                        tr.pages.mapIndexed { i, text -> Page(story.pages[i].text, art[i], more = mapOf(lang to text)) }
+                    },
+                    long = true,
+                )
+            }
             story.copy(
                 titleHi = story.titleHi ?: hindi?.title,
                 moralHi = story.moralHi ?: hindi?.moral,
