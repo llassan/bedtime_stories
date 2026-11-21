@@ -53,7 +53,9 @@ import com.vikash.bedtimestories.audio.Narrator
 import com.vikash.bedtimestories.audio.NeuralNarrator
 import com.vikash.bedtimestories.data.Lang
 import com.vikash.bedtimestories.data.Scene
+import com.vikash.bedtimestories.ui.art.BOY_STYLES
 import com.vikash.bedtimestories.ui.art.ChildLook
+import com.vikash.bedtimestories.ui.art.GIRL_STYLES
 import com.vikash.bedtimestories.ui.art.HAIR_COLORS
 import com.vikash.bedtimestories.ui.art.HAIR_STYLES
 import com.vikash.bedtimestories.ui.art.Illustration
@@ -69,7 +71,8 @@ fun ProfileScreen(app: AppState, neural: NeuralNarrator, narrator: Narrator, fir
     var hair by rememberSaveable { mutableIntStateOf(app.look.hair) }
     var hairColor by rememberSaveable { mutableIntStateOf(app.look.hairColor) }
     var pajama by rememberSaveable { mutableIntStateOf(app.look.pajama) }
-    val look = ChildLook(skin, hair, hairColor, pajama)
+    var girl by rememberSaveable { mutableStateOf(app.look.girl) }
+    val look = ChildLook(skin, hair, hairColor, pajama, girl)
     val focus = LocalFocusManager.current
     val valid = name.trim().isNotEmpty()
 
@@ -130,12 +133,29 @@ fun ProfileScreen(app: AppState, neural: NeuralNarrator, narrator: Narrator, fir
             )
         }
 
+        Heading(app.t("Character", "पात्र"))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(true to app.t("Girl", "लड़की"), false to app.t("Boy", "लड़का")).forEach { (g, label) ->
+                FilterChip(
+                    selected = girl == g,
+                    onClick = {
+                        girl = g
+                        // Keep the hairstyle if it suits both; otherwise pick the first one on offer.
+                        val styles = if (g) GIRL_STYLES else BOY_STYLES
+                        if (hair !in styles) hair = styles.first()
+                    },
+                    label = { Text(label) },
+                )
+            }
+        }
+
         Heading(app.t("Skin", "रंग"))
         Swatches(SKIN_TONES, skin) { skin = it }
         Heading(app.t("Hair", "बाल"))
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            HAIR_STYLES.forEachIndexed { i, label ->
-                FilterChip(selected = hair == i, onClick = { hair = i }, label = { Text(app.t(label, listOf("छोटे", "लंबे", "दो चोटी", "घुँघराले", "जूड़ा")[i])) })
+            (if (girl) GIRL_STYLES else BOY_STYLES).forEach { i ->
+                val hindi = listOf("छोटे", "लंबे", "दो चोटी", "घुँघराले", "जूड़ा", "खड़े बाल", "साइड माँग", "बॉब कट")[i]
+                FilterChip(selected = hair == i, onClick = { hair = i }, label = { Text(app.t(HAIR_STYLES[i], hindi)) })
             }
         }
         Spacer(Modifier.height(10.dp))

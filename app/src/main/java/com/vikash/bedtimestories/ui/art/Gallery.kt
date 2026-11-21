@@ -21,7 +21,8 @@ import com.vikash.bedtimestories.data.Scene
 @Composable
 fun Gallery() {
     // Newest drawings first, so they are on screen without scrolling.
-    val names = listOf("donkey", "goat", "hen", "egg", "bell", "sun") + ALL_ACTORS
+    // The child first, once in each hairstyle (boy or girl as the style suggests).
+    val names = List(HAIR_STYLES.size) { "hero" } + listOf("donkey", "goat", "hen", "egg", "bell", "sun") + ALL_ACTORS
     LazyVerticalGrid(GridCells.Fixed(5), Modifier.fillMaxSize().safeDrawingPadding()) {
         items(names.size) { i ->
             val name = names[i]
@@ -39,7 +40,7 @@ fun Gallery() {
                 else -> Scene.NIGHT
             }
             Column {
-                Illustration(scene, name, ChildLook(skin = i % 5, hair = i % 5, hairColor = i % 5, pajama = i % 5), Modifier.fillMaxWidth().aspectRatio(0.95f), animated = true)
+                Illustration(scene, name, ChildLook(skin = i % 5, hair = i % 8, hairColor = i % 5, pajama = i % 5, girl = ChildLook.looksLikeGirl(i % 8)), Modifier.fillMaxWidth().aspectRatio(0.95f), animated = true)
                 Text(name, fontSize = 11.sp)
             }
         }

@@ -88,6 +88,7 @@ import com.vikash.bedtimestories.Screen
 import com.vikash.bedtimestories.SleepMode
 import com.vikash.bedtimestories.audio.Narrator
 import com.vikash.bedtimestories.audio.NeuralNarrator
+import com.vikash.bedtimestories.audio.ReadAloud
 import com.vikash.bedtimestories.audio.SYSTEM_VOICE
 import com.vikash.bedtimestories.audio.VoiceBox
 import com.vikash.bedtimestories.data.Lang
@@ -104,7 +105,7 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: NeuralNarrator, voice: VoiceBox) {
+fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: NeuralNarrator, voice: VoiceBox, player: ReadAloud) {
     val pages = story.pages
     val pager = rememberPagerState { pages.size + 1 } // the extra page is "The End"
     val scope = rememberCoroutineScope()
@@ -112,7 +113,6 @@ fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: Neural
     val view = LocalView.current
 
     var myVoice by rememberSaveable { mutableStateOf(voice.count(story.id) > 0) }
-    var highlight by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var recording by remember { mutableStateOf(false) }
     var recTick by remember { mutableIntStateOf(0) } // bumps when recordings change on disk
     var notice by remember { mutableStateOf<String?>(null) }
@@ -140,34 +140,29 @@ fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: Neural
         if (granted) startRecording() else notice = "Allow the microphone to record your own voice."
     }
 
-    // Read the current page aloud, then turn to the next one.
-    LaunchedEffect(pager.settledPage, app.playing, myVoice, app.voice, app.slowVoice) {
-        highlight = null
-        if (!app.playing) return@LaunchedEffect
-        val p = pager.settledPage
-        if (p >= pages.size) {
-            app.playing = false
-            if (app.sleepMode == SleepMode.END) app.triggerGoodnight()
-            return@LaunchedEffect
+    // Reading aloud runs in [ReadAloud], outside this screen, so it carries on with the phone
+    // locked. Pressing play (or changing the voice while playing) starts it at this page.
+    LaunchedEffect(app.playing, myVoice, app.voice, app.slowVoice) {
+        if (app.playing) player.start(story, pager.settledPage, myVoice)
+    }
+    // Swiping to another page while it plays carries on reading from there.
+    LaunchedEffect(pager.settledPage) {
+        if (app.playing && player.storyId == story.id && pager.settledPage != player.page) {
+            player.start(story, pager.settledPage, myVoice)
         }
-        delay(350)
-        val text = app.text(pages[p])
-        val own = voice.file(story.id, p)
-        val ok = if (myVoice && own.length() > 0) {
-            voice.play(own)
-        } else {
-            // The storyteller first; the phone's own voice only if that cannot run here.
-            neural.speak(text, app.storyVoice, app.speed) { s, e -> highlight = s to e } ||
-                narrator.speak(text, app.slowVoice, app.lang.locale) { s, e -> highlight = s to e }
+    }
+    // Follow the pages the player turns, including any turned while the screen was off.
+    val firstTurn = remember { player.turn }
+    LaunchedEffect(player.turn) {
+        val target = player.page
+        if (player.turn != firstTurn && player.storyId == story.id && target != pager.currentPage && target <= pages.size) {
+            if (kotlin.math.abs(target - pager.currentPage) == 1) pager.animateScrollToPage(target) else pager.scrollToPage(target)
         }
-        highlight = null
-        if (!ok) {
-            app.playing = false
+    }
+    LaunchedEffect(player.failed) {
+        if (player.failed && player.storyId == story.id) {
             notice = app.t("No voice for this language was found. Install it in the phone’s Text-to-speech settings.", "इस भाषा की आवाज़ नहीं मिली। फ़ोन की टेक्स्ट-टू-स्पीच सेटिंग में इसे इंस्टॉल करें।")
-            return@LaunchedEffect
         }
-        delay(1000)
-        pager.animateScrollToPage(p + 1)
     }
 
     // Voice the rest of the story ahead of time so later pages start without a wait.
@@ -197,7 +192,7 @@ fun ReaderScreen(app: AppState, story: Story, narrator: Narrator, neural: Neural
         HorizontalPager(state = pager, modifier = Modifier.weight(1f), beyondViewportPageCount = 1) { i ->
             if (i < pages.size) {
                 val text = app.text(pages[i])
-                val h = highlight
+                val h = player.highlight.takeIf { player.storyId == story.id && player.page == i }
                 val lit = app.playing && h != null && i == pager.settledPage && h.first in 0 until h.second && h.second <= text.length
                 val shown = buildAnnotatedString {
                     append(text)

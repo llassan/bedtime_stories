@@ -40,6 +40,8 @@ import kotlin.math.min
  * A storyteller. [engine] names what reads it ("kokoro" for the bundled English
  * voices, or [SYSTEM_VOICE] for the phone's own voice), [sid] picks the speaker
  * inside it, and [pace] is the speed that sounds like calm bedtime reading.
+ * [sampleRate] is the rate the audio is played at; above the model's own 24 kHz it
+ * raises the voice's pitch.
  */
 data class StoryVoice(
     val name: String,
@@ -70,6 +72,13 @@ val STORY_VOICES = listOf(
     StoryVoice("ಫೋನ್ ಧ್ವನಿ", "ನಿಮ್ಮ ಫೋನ್‌ನ ಕನ್ನಡ ಧ್ವನಿ", Lang.KN, SYSTEM_VOICE, 0, 0, 1f),
     StoryVoice("ഫോണിന്റെ ശബ്ദം", "നിങ്ങളുടെ ഫോണിലെ മലയാളം ശബ്ദം", Lang.ML, SYSTEM_VOICE, 0, 0, 1f),
     StoryVoice("ਫ਼ੋਨ ਦੀ ਆਵਾਜ਼", "ਤੁਹਾਡੇ ਫ਼ੋਨ ਦੀ ਪੰਜਾਬੀ ਆਵਾਜ਼", Lang.PA, SYSTEM_VOICE, 0, 0, 1f),
+    // Children's voices. Kokoro has no child speakers, so these are grown-up voices made
+    // younger: voiced more slowly, then played faster by the same factor, which raises the
+    // pitch by that much and keeps the calm pace. Bella x1.30 is about 274 Hz and Sarah
+    // x1.25 about 240 Hz, in the range of a young child. They go at the end of this list
+    // because saved choices are positions in it.
+    StoryVoice("Poppy", "A little girl", Lang.EN, "kokoro", 1, 31_200, 0.72f / 1.30f),
+    StoryVoice("Teddy", "A little boy", Lang.EN, "kokoro", 3, 30_000, 0.72f / 1.25f),
 )
 
 /**

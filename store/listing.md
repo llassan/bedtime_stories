@@ -29,13 +29,13 @@ TEN LANGUAGES
 Read and listen in English, Hindi, Marathi, Gujarati, Tamil, Telugu, Bengali, Kannada, Malayalam and Punjabi. All 40 traditional tales are available in every language, and the whole app switches language with one tap.
 
 STORIES ABOUT YOUR CHILD
-Type your child's name and choose how their character looks: skin, hair and pyjamas. The English bedtime stories are then told about them, and they appear in the pictures. A story maker lets you pick a friend, a place and a lesson to create new stories of your own.
+Type your child's name, choose a boy or a girl, and pick how their character looks: skin, hair and pyjamas. The English bedtime stories are then told about them, and they appear in the pictures. A story maker lets you pick a friend, a place and a lesson to create new stories of your own.
 
 READ TO ME
-• English stories are read by four built-in storytellers that work without internet
+• English stories are read by six built-in storytellers that work without internet, including a little girl and a little boy
 • Other languages are read by your phone's own voice
 • In English, the sentence being read lights up, so early readers can follow along
-• Pages turn by themselves
+• Pages turn by themselves, and the story keeps playing with the screen locked
 • An extra-slow reading pace for very sleepy listeners
 
 IN YOUR OWN VOICE

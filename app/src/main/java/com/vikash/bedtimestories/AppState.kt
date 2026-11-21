@@ -38,7 +38,13 @@ class AppState(context: Context) {
     var childName by mutableStateOf(prefs.getString("name", "") ?: "")
         private set
     var look by mutableStateOf(
-        ChildLook(prefs.getInt("skin", 1), prefs.getInt("hair", 2), prefs.getInt("hairColor", 0), prefs.getInt("pajama", 0))
+        prefs.getInt("hair", 2).let { hair ->
+            ChildLook(
+                prefs.getInt("skin", 1), hair, prefs.getInt("hairColor", 0), prefs.getInt("pajama", 0),
+                // Profiles saved before the boy/girl choice existed keep the look their hairstyle suggests.
+                girl = prefs.getBoolean("girl", ChildLook.looksLikeGirl(hair)),
+            )
+        }
     )
         private set
     /** Which storyteller reads: an index into [STORY_VOICES]. */
@@ -61,7 +67,16 @@ class AppState(context: Context) {
 
     var screen by mutableStateOf<Screen>(Screen.Home)
         private set
-    var playing by mutableStateOf(false)
+    private var playingState by mutableStateOf(false)
+    /** True while a story is being read aloud. Changes are passed to [onPlayingChange] at once, even off screen. */
+    var playing: Boolean
+        get() = playingState
+        set(value) {
+            if (value == playingState) return
+            playingState = value
+            onPlayingChange?.invoke(value)
+        }
+    var onPlayingChange: ((Boolean) -> Unit)? = null
     var foreground by mutableStateOf(true)
     var goodnight by mutableStateOf(false)
     var sleepMode by mutableStateOf(SleepMode.OFF)
@@ -112,7 +127,7 @@ class AppState(context: Context) {
         onboarded = true
         prefs.edit().putString("name", childName)
             .putInt("skin", look.skin).putInt("hair", look.hair)
-            .putInt("hairColor", look.hairColor).putInt("pajama", look.pajama)
+            .putInt("hairColor", look.hairColor).putInt("pajama", look.pajama).putBoolean("girl", look.girl)
             .putBoolean("onboarded", true).apply()
     }
 

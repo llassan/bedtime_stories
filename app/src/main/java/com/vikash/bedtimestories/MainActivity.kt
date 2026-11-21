@@ -33,6 +33,8 @@ import com.vikash.bedtimestories.ads.BannerAd
 import com.vikash.bedtimestories.audio.Lullaby
 import com.vikash.bedtimestories.audio.Narrator
 import com.vikash.bedtimestories.audio.NeuralNarrator
+import com.vikash.bedtimestories.audio.PlaybackService
+import com.vikash.bedtimestories.audio.ReadAloud
 import com.vikash.bedtimestories.audio.VoiceBox
 import com.vikash.bedtimestories.data.Scene
 import com.vikash.bedtimestories.ui.BedtimeTheme
@@ -50,6 +52,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var narrator: Narrator
     private lateinit var voice: VoiceBox
     private lateinit var neural: NeuralNarrator
+    private lateinit var player: ReadAloud
     private val lullaby = Lullaby()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +67,19 @@ class MainActivity : ComponentActivity() {
         Ads.init(this)
         neural = NeuralNarrator(this)
         neural.warmUp(app.storyVoice)
+        player = ReadAloud(app, neural, narrator, voice)
+        // While a story plays, a media service keeps it going with the phone locked.
+        app.onPlayingChange = { on ->
+            if (on) {
+                val title = (app.screen as? Screen.Reader)?.let { app.story(it.storyId) }?.let { app.title(it) }
+                PlaybackService.start(this, title ?: getString(R.string.app_name))
+            } else {
+                player.stop()
+                PlaybackService.stop(this)
+                if (!app.foreground) lullaby.stop()
+            }
+        }
+        PlaybackService.onPause = { runOnUiThread { app.playing = false } }
         setContent {
             BedtimeTheme {
                 // A developer-only screen for reviewing the artwork (see Gallery.kt).
@@ -73,7 +89,7 @@ class MainActivity : ComponentActivity() {
                         Box(Modifier.fillMaxSize().background(NightBrush)) { com.vikash.bedtimestories.ui.art.Gallery() }
                     debuggable && intent.getBooleanExtra("promo", false) -> com.vikash.bedtimestories.ui.art.Promo()
                     // "noads" hides the test banner so store screenshots never show an advertisement.
-                    else -> Root(app, narrator, neural, voice, lullaby, showAds = !(debuggable && intent.getBooleanExtra("noads", false)))
+                    else -> Root(app, narrator, neural, voice, lullaby, player, showAds = !(debuggable && intent.getBooleanExtra("noads", false)))
                 }
             }
         }
@@ -85,14 +101,19 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        // Nothing keeps talking or playing once the app leaves the screen.
-        app.playing = false
+        // A story that is being read keeps going, with its lullaby, when the phone is locked
+        // or the app is left; anything else falls quiet.
         app.foreground = false
-        lullaby.stop()
+        if (!app.playing) lullaby.stop()
         super.onStop()
     }
 
     override fun onDestroy() {
+        PlaybackService.onPause = null
+        app.onPlayingChange = null
+        app.playing = false
+        player.release()
+        PlaybackService.stop(this)
         narrator.shutdown()
         neural.release()
         voice.release()
@@ -102,14 +123,14 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun Root(app: AppState, narrator: Narrator, neural: NeuralNarrator, voice: VoiceBox, lullaby: Lullaby, showAds: Boolean = true) {
+private fun Root(app: AppState, narrator: Narrator, neural: NeuralNarrator, voice: VoiceBox, lullaby: Lullaby, player: ReadAloud, showAds: Boolean = true) {
     val screen = app.screen
 
     // Load whichever storyteller is chosen, so it is ready before play is pressed.
     LaunchedEffect(app.voice) { neural.warmUp(app.storyVoice) }
 
     // Background lullaby only while a story is open.
-    val wantMusic = app.musicOn && app.foreground && !app.goodnight && app.onboarded && screen is Screen.Reader
+    val wantMusic = app.musicOn && (app.foreground || app.playing) && !app.goodnight && app.onboarded && screen is Screen.Reader
     LaunchedEffect(wantMusic) {
         if (wantMusic) lullaby.start() else lullaby.stop()
     }
@@ -142,7 +163,7 @@ private fun Root(app: AppState, narrator: Narrator, neural: NeuralNarrator, voic
                 screen is Screen.Reader -> {
                     val story = remember(screen.storyId) { app.story(screen.storyId) }
                     if (story == null) LaunchedEffect(Unit) { app.go(Screen.Home) }
-                    else ReaderScreen(app, story, narrator, neural, voice)
+                    else ReaderScreen(app, story, narrator, neural, voice, player)
                 }
             }
            }
